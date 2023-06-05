@@ -2,9 +2,13 @@ import requests as rq
 from lxml import html
 from lxml import etree
 import os
+import psycopg2
+
+conn = psycopg2.connect("dbname=reserve user=leti password=leti312 host=localhost")
 
 def get_data(rivernum, firstday):
-    fd = firstday.replace(".","-")
+    fd = firstday
+    print(fd)
     aname = "a-"+fd+".html"
     try:
         with open(aname, "r") as i:
@@ -53,13 +57,42 @@ def succ(dt):
         return [y,m+1,d]
     return [y+1,1,d]
 
+def imp(rivernum, fdt, d):
+    fdt=fdt[:]
+    fdt.reverse()
+    print(fdt)
+    with open("b-{}.html".format(d), "w") as o:
+        rc = get_data(1, d)
+        for r in rc:
+            river = r.attrib["data-river"]
+            # o.write("{}\n".format(river))
+            d = {}
+            for riv in r:
+                reserve = riv.text
+                print(river, reserve)
+                # o.write("{}\n".format(reserve))
+                # dt = {}
+                # for a in riv.attrib:
+                #     if a.startswith("water-"):
+                #         v = riv.attrib[a]
+                #         v = list(proc(v))
+                #         a = a.replace("water-", "").replace("-", "_")
+                #         # o.write("{}:{}\n".format(a, v))
+                #         dt[a] = v
+                # d[reserve] = dt
+            #rivers[river] = d
+            # o.write(etree.tostring(riv, encoding=str, pretty_print=True))
+        #o.write("{}".format(repr(rivers)))
+
+
 def impdata(rivernum):
     startdt=[2017,1,1] # "01-01-2017"
     enddt=[2023,12,12] # "12-12-2023"
     dt = startdt
     while dt <= enddt:
         d = "{2}-{1}-{0}".format(*dt)
-        print(dt)
+        print(d, dt)
+        imp(rivernum, dt, d)
         dt=succ(dt)
 
 def main():
@@ -67,27 +100,6 @@ def main():
     impdata(1)
     quit()
     fdt = os.environ.get("Y","01-01-2023")
-    with open("b-{}.html".format(fdt.replace(".","-")), "w") as o:
-        rc = get_data(1, fdt)
-        for r in rc:
-            river = r.attrib["data-river"]
-            # o.write("{}\n".format(river))
-            d = {}
-            for riv in r:
-                reserve = riv.text
-                # o.write("{}\n".format(reserve))
-                dt = {}
-                for a in riv.attrib:
-                    if a.startswith("water-"):
-                        v = riv.attrib[a]
-                        v = list(proc(v))
-                        a = a.replace("water-", "").replace("-", "_")
-                        # o.write("{}:{}\n".format(a, v))
-                        dt[a] = v
-                d[reserve] = dt
-            rivers[river] = d
-            # o.write(etree.tostring(riv, encoding=str, pretty_print=True))
-        o.write("{}".format(repr(rivers)))
 
 
 if __name__ == '__main__':
